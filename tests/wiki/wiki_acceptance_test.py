@@ -19,13 +19,20 @@ Non-functional Requirements:
  - Tests are full-stack
 """
 
+import shelve
+
+from werkzeug.test import Client
+
 from kilopyte import wiki
 
 
 class TestWikiEngine:
     # POST to a valid WikiWord URL to create or edit a page.
-    def test_create_new_page(self):
+    def test_create_new_page(self, tmp_path):
         """POST to create a new page"""
-        engine = wiki.Engine({})
-        engine.post("", "hello world!")
-        assert engine.get("") == "hello world!"
+        db = shelve.open(str(tmp_path / "wiki.db"))
+        engine = wiki.Engine(db)
+        client = Client(engine)
+        client.post("/", data="hello world!")
+        content, _status, _headers = client.get("/")
+        assert "".join(c.decode("utf-8") for c in content) == "hello world!"
