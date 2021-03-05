@@ -14,6 +14,9 @@ pyminifier = "^2.1"
 black = "^20.8b1"
 pylint = "^2.7.2"
 Werkzeug = "^1.0.1"
+splinter = "^0.14.0"
+selenium = "^3.141.0"
+mypy = "^0.812"
 
 [tool.isort]
 known_first_party = ['kilopyte' ]

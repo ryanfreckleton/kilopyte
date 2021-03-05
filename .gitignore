@@ -1,2 +1,3 @@
 .direnv/
 poetry.lock
+geckodriver.log
