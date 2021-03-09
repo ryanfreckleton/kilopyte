@@ -18,10 +18,11 @@ Functional Requirements:
 Non-functional Requirements:
  - Tests are full-stack
 """
-
+import multiprocessing
 import shelve
+from wsgiref.simple_server import make_server
 
-from werkzeug.test import Client
+from splinter import Browser
 
 from kilopyte import wiki
 
@@ -30,9 +31,20 @@ class TestWikiEngine:
     # POST to a valid WikiWord URL to create or edit a page.
     def test_create_new_page(self, tmp_path):
         """POST to create a new page"""
+        self.browser = Browser(headless=True)
         db = shelve.open(str(tmp_path / "wiki.db"))
         engine = wiki.Engine(db)
-        client = Client(engine)
-        client.post("/", data="hello world!")
-        content, _status, _headers = client.get("/")
-        assert "".join(c.decode("utf-8") for c in content) == "hello world!"
+        server = make_server("", 8754, engine)
+        self.process = multiprocessing.Process(target=server.serve_forever)
+        self.process.start()
+
+        self.browser.visit("http://localhost:8754")
+        self.browser.fill("content", "hello world")
+        self.browser.find_by_name("save").first.click()
+        assert self.browser.is_text_present("hello world")
+
+    def teardown_method(self):
+        self.browser.quit()
+        self.process.terminate()
+        self.process.join()
+        del self.process
