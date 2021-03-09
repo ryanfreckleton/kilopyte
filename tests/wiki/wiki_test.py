@@ -38,4 +38,4 @@ class TestWikiGet:
             content
         )  # FIXME: This needs to be a better assertion, but not fragile to syntax.
         assert status == "200 OK"
-        assert not headers.has_key("Location")
+        assert "Location" not in headers

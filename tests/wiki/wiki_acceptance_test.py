@@ -22,29 +22,39 @@ import multiprocessing
 import shelve
 from wsgiref.simple_server import make_server
 
+import pytest
 from splinter import Browser
 
 from kilopyte import wiki
 
 
+@pytest.fixture(scope="class")
+def browser(tmp_path_factory):
+    tmp_path = tmp_path_factory.mktemp("acceptance")
+    db = shelve.open(str(tmp_path / "wiki.db"))
+    engine = wiki.Engine(db)
+    server = make_server("", 8754, engine)
+    process = multiprocessing.Process(target=server.serve_forever)
+    process.start()
+    b = Browser(headless=True)
+    b.visit("http://localhost:8754")
+    yield b
+    b.quit()
+    process.terminate()
+    process.join()
+    del process
+
+
 class TestWikiEngine:
     # POST to a valid WikiWord URL to create or edit a page.
-    def test_create_new_page(self, tmp_path):
+    def test_create_new_page(self, browser):
         """POST to create a new page"""
-        self.browser = Browser(headless=True)
-        db = shelve.open(str(tmp_path / "wiki.db"))
-        engine = wiki.Engine(db)
-        server = make_server("", 8754, engine)
-        self.process = multiprocessing.Process(target=server.serve_forever)
-        self.process.start()
+        content = browser.find_by_name("content").first
+        assert content.text == ""
+        browser.fill("content", "hello world")
+        browser.find_by_name("save").first.click()
+        assert browser.is_text_present("hello world")
 
-        self.browser.visit("http://localhost:8754")
-        self.browser.fill("content", "hello world")
-        self.browser.find_by_name("save").first.click()
-        assert self.browser.is_text_present("hello world")
-
-    def teardown_method(self):
-        self.browser.quit()
-        self.process.terminate()
-        self.process.join()
-        del self.process
+    def test_edit_existing_page(self, browser):
+        browser.click_link_by_text("edit")
+        assert browser.is_text_present("hello world")

@@ -23,28 +23,37 @@ class Engine:
                 b"content"
             ][0]
             self.post(path, content.decode("utf-8"))
+            content = (
+                f'<a href="/{path}?edit">edit</a>' + content.decode("utf-8")
+            ).encode()
             status = "201 OK"
-            headers = [("Content-type", "text/plain")]
+            headers = [("Content-type", "text/html")]
         elif environ["REQUEST_METHOD"] == "GET":
             if environ["QUERY_STRING"] == "edit":
                 status = "200 OK"
                 headers = [("Content-type", "text/html")]
-                content = b"""<!doctype html>
+                raw_content = self.get(path)
+                if raw_content is INVALID_WIKIWORD:
+                    raw_content = ""
+                template = f"""<!doctype html>
                               <html lang=en>
                               <meta charset=utf-8>
                               <title>blah</title>
                               <body>
                               <form action="/" method="post">
-                              <textarea name="content"></textarea>
-                              <input type="submit" name="save" value="save">
+                              <textarea name="content">{raw_content}</textarea>
+                              <input type="submit" name="save">
                               </form>
                            """
+                content = template.encode()
             else:
                 status = "200 OK"
-                headers = [("Content-type", "text/plain")]
+                headers = [("Content-type", "text/html")]
                 raw_content = self.get(path)
                 if raw_content is not INVALID_WIKIWORD:
-                    content = raw_content.encode()
+                    content = (
+                        f'<a href="/{path}?edit">edit</a>' + raw_content
+                    ).encode()
                 else:
                     status = "307 Temporary Redirect"
                     content = b""
