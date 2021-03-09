@@ -58,3 +58,12 @@ class TestWikiEngine:
     def test_edit_existing_page(self, browser):
         browser.click_link_by_text("edit")
         assert browser.is_text_present("hello world")
+
+    def test_create_page_outside_of_index(self, browser):
+        browser.visit("http://localhost:8754/foobar")
+        content = browser.find_by_name("content").first
+        assert content.text == ""
+        browser.fill("content", "hello world")
+        browser.find_by_name("save").first.click()
+        assert browser.is_text_present("hello world")
+        assert browser.url == "http://localhost:8754/foobar"

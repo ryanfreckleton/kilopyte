@@ -40,7 +40,7 @@ class Engine:
                               <meta charset=utf-8>
                               <title>blah</title>
                               <body>
-                              <form action="/" method="post">
+                              <form action="/{path}" method="post">
                               <textarea name="content">{raw_content}</textarea>
                               <input type="submit" name="save">
                               </form>
