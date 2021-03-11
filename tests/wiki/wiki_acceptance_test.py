@@ -45,6 +45,7 @@ def browser(tmp_path_factory):
     del process
 
 
+@pytest.mark.slow
 class TestWikiEngine:
     # POST to a valid WikiWord URL to create or edit a page.
     def test_create_new_page(self, browser):
