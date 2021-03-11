@@ -1,3 +1,5 @@
 .direnv/
 poetry.lock
 geckodriver.log
+htmlcov/
+.coverage
