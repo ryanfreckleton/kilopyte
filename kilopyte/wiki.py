@@ -1,67 +1,101 @@
 import urllib
 
 
-class INVALID_WIKIWORD:
-    """Sentinal value for invalid wiki words."""
-
-
 class Engine:
     def __init__(self, database):
         self.database = database
 
-    def post(self, wikiword, content):
-        self.database[wikiword] = content
-
-    def get(self, wikiword):
-        return self.database.get(wikiword, INVALID_WIKIWORD)
-
     def __call__(self, environ, start_response):
-        path = environ["PATH_INFO"].strip("/")
-        if environ["REQUEST_METHOD"] == "POST":
-            content_length = int(environ.get("CONTENT_LENGTH", 0))
-            content = urllib.parse.parse_qs(environ["wsgi.input"].read(content_length))[
-                b"content"
-            ][0]
-            self.post(path, content.decode("utf-8"))
-            content = (
-                f'<a href="/{path}?edit">edit</a>' + content.decode("utf-8")
-            ).encode()
-            status = "201 OK"
-            headers = [("Content-type", "text/html")]
-        elif environ["REQUEST_METHOD"] == "GET":
-            if environ["QUERY_STRING"] == "edit":
-                status = "200 OK"
-                headers = [("Content-type", "text/html")]
-                raw_content = self.get(path)
-                if raw_content is INVALID_WIKIWORD:
-                    raw_content = ""
-                template = f"""<!doctype html>
-                              <html lang=en>
-                              <meta charset=utf-8>
-                              <title>blah</title>
-                              <body>
-                              <form action="/{path}" method="post">
-                              <textarea name="content">{raw_content}</textarea>
-                              <input type="submit" name="save">
-                              </form>
-                           """
-                content = template.encode()
+        request = Request(environ)
+        headers = default_headers()
+        status = "200 OK"
+        if request.is_post():
+            save(self.database, request.path, request.post_content)
+            content = add_edit_link(request.path, request.post_content)
+            status = "201 Created"
+        elif request.is_get():
+            if request.is_edit_request():
+                raw_content = get_from(self.database, request.path)
+                content = edit_page(request.path, raw_content)
             else:
-                status = "200 OK"
-                headers = [("Content-type", "text/html")]
-                raw_content = self.get(path)
-                if raw_content is not INVALID_WIKIWORD:
-                    content = (
-                        f'<a href="/{path}?edit">edit</a>' + raw_content
-                    ).encode()
+                if page_exists(request.path, self.database):
+                    raw_content = get_from(self.database, request.path)
+                    content = add_edit_link(request.path, raw_content)
                 else:
                     status = "307 Temporary Redirect"
                     content = b""
-                    headers.append(("Location", f"{path}?edit"))
+                    add_location_header(headers, request.path)
         else:  # TODO: Method not allowed
             pass
         start_response(status, headers)
         return [content]
+
+
+class Request:
+    def __init__(self, environ):
+        self.environ = environ
+        self._post_content = None
+
+    @property
+    def post_content(self):
+        if not self._post_content:
+            self._post_content = urllib.parse.parse_qs(
+                self.environ["wsgi.input"].read(
+                    int(self.environ.get("CONTENT_LENGTH", 0))
+                )
+            )[b"content"][0].decode("utf-8")
+        return self._post_content
+
+    @property
+    def path(self):
+        return self.environ["PATH_INFO"].strip("/")
+
+    def is_post(self):
+        return self.environ["REQUEST_METHOD"] == "POST"
+
+    def is_get(self):
+        return self.environ["REQUEST_METHOD"] == "GET"
+
+    def is_edit_request(self):
+        return self.environ["QUERY_STRING"] == "edit"
+
+
+def save(database, path, content):
+    database[path] = content
+
+
+def add_edit_link(path, content):
+    return (f'<a href="/{path}?edit">edit</a>' + content).encode()
+
+
+def get_from(database, path):
+    return database.get(path, "")
+
+
+def edit_page(path, content):
+    return (
+        "<!doctype html>"
+        "<html lang=en>"
+        "<meta charset=utf-8>"
+        "<title>blah</title>"
+        "<body>"
+        f'<form action="/{path}" method="post">'
+        f'<textarea name="content">{content}</textarea>'
+        '<input type="submit" name="save">'
+        " </form>"
+    ).encode()
+
+
+def default_headers():
+    return [("Content-type", "text/html")]
+
+
+def add_location_header(headers, path):
+    headers.append(("Location", f"{path}?edit"))
+
+
+def page_exists(path, database):
+    return path in database
 
 
 if __name__ == "__main__":

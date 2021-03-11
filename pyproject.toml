@@ -18,6 +18,7 @@ splinter = "^0.14.0"
 selenium = "^3.141.0"
 mypy = "^0.812"
 hypothesis = "^6.6.1"
+coverage = "^5.5"
 
 [tool.isort]
 known_first_party = ['kilopyte' ]

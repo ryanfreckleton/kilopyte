@@ -16,7 +16,9 @@ class TestWikiGet:
     def test_get_retrieves_data_from_database(self):
         db = {"foo": "bar"}
         engine = wiki.Engine(db)
-        assert engine.get("foo") == "bar"
+        client = Client(engine)
+        content, _status, _headers = client.get("/foo")
+        assert b"bar" in b"".join(content)
 
     def test_get_missing_page(self):
         db = {}
