@@ -1,5 +1,18 @@
 import urllib
 
+MAIN = '<a href="/{path}?edit">edit</a>{content}'
+EDIT = (
+    "<!doctype html>"
+    "<html lang=en>"
+    "<meta charset=utf-8>"
+    "<title>blah</title>"
+    "<body>"
+    '<form action="/{path}" method="post">'
+    '<textarea name="content">{content}</textarea>'
+    '<input type="submit" name="save">'
+    " </form>"
+)
+
 
 class Engine:
     def __init__(self, database):
@@ -11,16 +24,16 @@ class Engine:
         status = "200 OK"
         if request.is_post():
             save(self.database, request.path, request.post_content)
-            content = add_edit_link(request.path, request.post_content)
+            content = render(MAIN, path=request.path, content=request.post_content)
             status = "201 Created"
         elif request.is_get():
             if request.is_edit_request():
                 raw_content = get_from(self.database, request.path)
-                content = edit_page(request.path, raw_content)
+                content = render(EDIT, path=request.path, content=raw_content)
             else:
                 if page_exists(request.path, self.database):
                     raw_content = get_from(self.database, request.path)
-                    content = add_edit_link(request.path, raw_content)
+                    content = render(MAIN, path=request.path, content=raw_content)
                 else:
                     status = "307 Temporary Redirect"
                     content = b""
@@ -64,26 +77,12 @@ def save(database, path, content):
     database[path] = content
 
 
-def add_edit_link(path, content):
-    return (f'<a href="/{path}?edit">edit</a>' + content).encode()
+def render(template, **kwargs):
+    return template.format_map(kwargs).encode()
 
 
 def get_from(database, path):
     return database.get(path, "")
-
-
-def edit_page(path, content):
-    return (
-        "<!doctype html>"
-        "<html lang=en>"
-        "<meta charset=utf-8>"
-        "<title>blah</title>"
-        "<body>"
-        f'<form action="/{path}" method="post">'
-        f'<textarea name="content">{content}</textarea>'
-        '<input type="submit" name="save">'
-        " </form>"
-    ).encode()
 
 
 def default_headers():
