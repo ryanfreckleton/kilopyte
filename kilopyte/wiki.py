@@ -1,17 +1,64 @@
 import urllib
 
-MAIN = '<a href="/{path}?edit">edit</a>{content}'
-EDIT = (
-    "<!doctype html>"
-    "<html lang=en>"
-    "<meta charset=utf-8>"
-    "<title>blah</title>"
-    "<body>"
-    '<form action="/{path}" method="post">'
-    '<textarea name="content">{content}</textarea>'
-    '<input type="submit" name="save">'
-    " </form>"
-)
+MAIN = """\
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{path}</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    </head>
+    <body>
+        <nav>
+            <a href="{path}?edit">Edit Page</a>
+            <a href="#">Recent Changes</a>
+            <a href="#">Page History</a>
+            <a href="#">What Links Here</a>
+        </nav>
+        <main>
+        <header>
+            <h1>{path}</h1>
+        </header>
+        <article>
+        {content}
+        </article>
+        </main>
+    </body>
+</html>
+"""
+
+EDIT = """\
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{path}</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/water.css@2/out/water.css">
+    </head>
+    <body>
+        <nav>
+            <strong>Edit Page</strong>
+            <a href="#">Recent Changes</a>
+            <a href="#">Page History</a>
+            <a href="#">What Links Here</a>
+        </nav>
+        <main>
+        <header>
+            <h1>{path}</h1>
+        </header>
+        <article>
+            <form action="{path}" method="POST">
+                <textarea name="content">{content}</textarea>
+                <button type="submit">Save</button>
+                <button type="reset">Reset</button>
+            </form>
+        </article>
+        </main>
+    </body>
+</html>
+"""
 
 
 class Engine:
