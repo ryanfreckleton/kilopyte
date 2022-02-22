@@ -1,5 +1,19 @@
 Kilopyte Wiki
 =============
+https://wiki.c2.com/?WikiPrinciples
+
+Minimal set of principles:
+- Automatic link generation
+- Content editable by all
+- Easy text input
+- Back links
+
+Helpful features:
+- Recent changes
+- Find pages
+- Quick diff
+- Page list
+
 Overview
 --------
 **Goal:** A minimal, but complete, WikiWikiWeb implemented in python,
@@ -30,16 +44,19 @@ Functional Requirements:
  - GET to a valid WikiWord URL to get the current contents.
     - If no page yet exists, redirect to an edit page.
     - Validate wikiwords
- - Renderable HTML5.
- - Syntax is a subset of the wikicreole markup language.
+ ✓ Renderable HTML5.
+ * Syntax is a subset of the wikicreole markup language.
  - Immune to XSS or injection attacks.
  - Saves pages to a persistent database file.
  - Is WSGI service.
  - Runnable from wsgiref
+ - Home page link changes properly when home is selected.
 ```
 
 Non-functional Requirements:
 ----------------------------
 ```
  - Tests are full-stack
+ - Easy for code to be understood
+ - Secure
 ```
