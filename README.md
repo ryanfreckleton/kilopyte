@@ -22,6 +22,12 @@ These libraries should be clear and easy to understand and make up a toolkit tha
  - Monte Carlo Simulation
  - microKanren
  - Curses workalike
+ - Pagerank
+ - TF-IDF
+ - Spaced Repetition System
+ - Code Review System
+ - Web Framework
+ - ORM helper
 
 ## Contributing
 Bug reports, ideas and pull requests are welcome!
