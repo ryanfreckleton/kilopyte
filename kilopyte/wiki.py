@@ -1,3 +1,6 @@
+import os
+import re
+import shelve
 import urllib
 
 MAIN = """\
@@ -11,6 +14,7 @@ MAIN = """\
     </head>
     <body>
         <nav>
+            <a href="/">Home</a>
             <a href="{path}?edit">Edit Page</a>
             <a href="#">Recent Changes</a>
             <a href="#">Page History</a>
@@ -39,6 +43,7 @@ EDIT = """\
     </head>
     <body>
         <nav>
+            <a href="/">Home</a>
             <strong>Edit Page</strong>
             <a href="#">Recent Changes</a>
             <a href="#">Page History</a>
@@ -71,7 +76,11 @@ class Engine:
         status = "200 OK"
         if request.is_post():
             save(self.database, request.path, request.post_content)
-            content = render(MAIN, path=request.path, content=request.post_content)
+            content = render(
+                MAIN,
+                path=request.path,
+                content=parse(request.post_content, set(self.database)),
+            )
             status = "201 Created"
         elif request.is_get():
             if request.is_edit_request():
@@ -80,7 +89,11 @@ class Engine:
             else:
                 if page_exists(request.path, self.database):
                     raw_content = get_from(self.database, request.path)
-                    content = render(MAIN, path=request.path, content=raw_content)
+                    content = render(
+                        MAIN,
+                        path=request.path,
+                        content=parse(raw_content, set(self.database)),
+                    )
                 else:
                     status = "307 Temporary Redirect"
                     content = b""
@@ -144,10 +157,26 @@ def page_exists(path, database):
     return path in database
 
 
+def parse(wikitext, known_wikiwords):
+    WIKIWORD = re.compile(r"((?:[A-Z][a-z]+){2,})")
+
+    def replace(match):
+        if match.group(1) in known_wikiwords:
+            return match.expand(r'<a href="/\1">\1</a>')
+        else:
+            return match.expand(r'\1<a href="/\1?edit">?</a>')
+
+    result = []
+    for paragraph in re.split(r"\n\s*\n", wikitext):
+        paragraph = re.sub(WIKIWORD, replace, paragraph)
+        result.append(f"<p>{paragraph}</p>")
+    return "\n\n".join(result)
+
+
 if __name__ == "__main__":
     from wsgiref.simple_server import make_server
 
-    db = {}
+    db = shelve.open(os.environ.get("WIKI_DB", "wiki.shelf"))
     engine = Engine(db)
     server = make_server("", 8000, engine)
     server.serve_forever()

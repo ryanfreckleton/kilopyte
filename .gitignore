@@ -3,3 +3,5 @@ poetry.lock
 geckodriver.log
 htmlcov/
 .coverage
+.hypothesis/
+.mutmut-cache
